@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 
 const POD_COUNT = 20
-const MODES = ['Idle', 'iPad', 'Load', 'Unload', 'Up', 'Peak', 'Down', 'Hold', 'E-Stop']
+/** Operator/override modes only (dropdown + legend). */
+const MODES = ['Load', 'Unload', 'Up', 'Down', 'E-Stop']
 
+/** Spec / real ride times (meta strip labels). */
 const TIMINGS = {
   ride: 255,
   up: 100,
@@ -14,6 +16,9 @@ const TIMINGS = {
   spacingM: 20,
   velocityMs: 2,
 }
+
+/** Demo cycle: each stage advances in ~3s so the grid changes quickly. */
+const DEMO_STAGE_S = 3
 
 const HEADWAY_S = TIMINGS.spacingM / TIMINGS.velocityMs
 
@@ -28,12 +33,13 @@ const STAGE = {
   ESTOP: 'estop',
 }
 
+// Peak stays an automatic stage label; pods keep Up through demo peak.
 const STAGE_ORDER = [
-  { id: STAGE.LOAD, label: 'Load / Board', duration: TIMINGS.load, mode: 'Load' },
-  { id: STAGE.UP, label: 'Ascending (Up)', duration: TIMINGS.up, mode: 'Up' },
-  { id: STAGE.PEAK, label: 'Peak Transition', duration: TIMINGS.peak, mode: 'Peak' },
-  { id: STAGE.DOWN, label: 'Descending (Down)', duration: TIMINGS.down, mode: 'Down' },
-  { id: STAGE.UNLOAD, label: 'Unload / Alight', duration: TIMINGS.unload, mode: 'Unload' },
+  { id: STAGE.LOAD, label: 'Load / Board', duration: DEMO_STAGE_S, mode: 'Load' },
+  { id: STAGE.UP, label: 'Ascending (Up)', duration: DEMO_STAGE_S, mode: 'Up' },
+  { id: STAGE.PEAK, label: 'Peak Transition', duration: DEMO_STAGE_S, mode: 'Up' },
+  { id: STAGE.DOWN, label: 'Descending (Down)', duration: DEMO_STAGE_S, mode: 'Down' },
+  { id: STAGE.UNLOAD, label: 'Unload / Alight', duration: DEMO_STAGE_S, mode: 'Unload' },
 ]
 
 function formatClock(totalSeconds) {
@@ -46,7 +52,7 @@ function formatClock(totalSeconds) {
 function createPods() {
   return Array.from({ length: POD_COUNT }, (_, i) => ({
     id: i + 1,
-    mode: 'Idle',
+    mode: null,
     iPad: '---',
     overridden: false,
   }))
@@ -72,7 +78,7 @@ export default function App() {
   const [rideElapsed, setRideElapsed] = useState(0)
   const [cycleActive, setCycleActive] = useState(false)
   const [overridePod, setOverridePod] = useState(1)
-  const [overrideMode, setOverrideMode] = useState('Hold')
+  const [overrideMode, setOverrideMode] = useState('Down')
 
   const stageRef = useRef(stageId)
   const remainingRef = useRef(remaining)
@@ -125,7 +131,7 @@ export default function App() {
         setPods((prev) =>
           mapNonOverridden(prev, (pod) => ({
             ...pod,
-            mode: 'Idle',
+            mode: null,
             iPad: pod.iPad === '---' ? '---' : 'Loaded',
           })),
         )
@@ -151,7 +157,8 @@ export default function App() {
         const selected = Math.random() > 0.12
         return {
           ...pod,
-          mode: 'iPad',
+          // iPad stays status text only — not a Mode option
+          mode: pod.mode,
           iPad: selected ? 'Selected' : 'Pending',
         }
       }),
@@ -166,9 +173,9 @@ export default function App() {
         }),
       )
       stageRef.current = STAGE.LOAD
-      remainingRef.current = TIMINGS.load
+      remainingRef.current = DEMO_STAGE_S
       setStageId(STAGE.LOAD)
-      setRemaining(TIMINGS.load)
+      setRemaining(DEMO_STAGE_S)
       setRideElapsed(0)
       setCycleActive(true)
     }, 450)
@@ -201,7 +208,7 @@ export default function App() {
     setRideElapsed(0)
     setCycleActive(false)
     setOverridePod(1)
-    setOverrideMode('Hold')
+    setOverrideMode('Down')
   }
 
   const showReset =
@@ -237,8 +244,7 @@ export default function App() {
 
       <section className="pod-grid" aria-label="Pod status grid">
         {pods.map((pod) => {
-          const modeDisplay =
-            pod.mode === 'Idle' && pod.iPad === '---' ? '---' : pod.mode
+          const modeDisplay = pod.mode == null ? '---' : pod.mode
           return (
             <article
               key={pod.id}
