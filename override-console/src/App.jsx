@@ -5,6 +5,7 @@ const POD_COUNT = 20
 /** Operator/override modes only (dropdown + legend). */
 const MODES = ['Load', 'Unload', 'Up', 'Down', 'E-Stop']
 
+/** Spec / real ride times (meta strip labels). */
 const TIMINGS = {
   ride: 255,
   up: 100,
@@ -15,6 +16,9 @@ const TIMINGS = {
   spacingM: 20,
   velocityMs: 2,
 }
+
+/** Demo cycle: each stage advances in ~3s so the grid changes quickly. */
+const DEMO_STAGE_S = 3
 
 const HEADWAY_S = TIMINGS.spacingM / TIMINGS.velocityMs
 
@@ -29,13 +33,13 @@ const STAGE = {
   ESTOP: 'estop',
 }
 
-// Peak stays as an automatic stage label; pods keep Up through the 9s peak.
+// Peak stays an automatic stage label; pods keep Up through demo peak.
 const STAGE_ORDER = [
-  { id: STAGE.LOAD, label: 'Load / Board', duration: TIMINGS.load, mode: 'Load' },
-  { id: STAGE.UP, label: 'Ascending (Up)', duration: TIMINGS.up, mode: 'Up' },
-  { id: STAGE.PEAK, label: 'Peak Transition', duration: TIMINGS.peak, mode: 'Up' },
-  { id: STAGE.DOWN, label: 'Descending (Down)', duration: TIMINGS.down, mode: 'Down' },
-  { id: STAGE.UNLOAD, label: 'Unload / Alight', duration: TIMINGS.unload, mode: 'Unload' },
+  { id: STAGE.LOAD, label: 'Load / Board', duration: DEMO_STAGE_S, mode: 'Load' },
+  { id: STAGE.UP, label: 'Ascending (Up)', duration: DEMO_STAGE_S, mode: 'Up' },
+  { id: STAGE.PEAK, label: 'Peak Transition', duration: DEMO_STAGE_S, mode: 'Up' },
+  { id: STAGE.DOWN, label: 'Descending (Down)', duration: DEMO_STAGE_S, mode: 'Down' },
+  { id: STAGE.UNLOAD, label: 'Unload / Alight', duration: DEMO_STAGE_S, mode: 'Unload' },
 ]
 
 function formatClock(totalSeconds) {
@@ -169,9 +173,9 @@ export default function App() {
         }),
       )
       stageRef.current = STAGE.LOAD
-      remainingRef.current = TIMINGS.load
+      remainingRef.current = DEMO_STAGE_S
       setStageId(STAGE.LOAD)
-      setRemaining(TIMINGS.load)
+      setRemaining(DEMO_STAGE_S)
       setRideElapsed(0)
       setCycleActive(true)
     }, 450)
