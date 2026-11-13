@@ -17,8 +17,8 @@ const TIMINGS = {
   velocityMs: 2,
 }
 
-/** Demo cycle: each stage advances in ~1s so the grid changes quickly. */
-const DEMO_STAGE_S = 1
+/** Demo cycle: each stage advances in ~3s so the grid changes quickly. */
+const DEMO_STAGE_S = 3
 
 const HEADWAY_S = TIMINGS.spacingM / TIMINGS.velocityMs
 
